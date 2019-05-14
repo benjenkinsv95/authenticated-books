@@ -1,7 +1,10 @@
-class BooksController < ApplicationController
-  before_action :set_book, only: [:show, :update, :destroy]
+# frozen_string_literal: true
+
+class BooksController < ProtectedController
+  before_action :set_book, only: %i[update destroy]
 
   # GET /books
+  # GET /books.json
   def index
     @books = Book.all
 
@@ -9,22 +12,25 @@ class BooksController < ApplicationController
   end
 
   # GET /books/1
+  # GET /books/1.json
   def show
-    render json: @book
+    render json: Book.find(params[:id])
   end
 
   # POST /books
+  # POST /books.json
   def create
-    @book = Book.new(book_params)
+    @book = current_user.books.build(book_params)
 
     if @book.save
-      render json: @book, status: :created, location: @book
+      render json: @book, status: :created
     else
       render json: @book.errors, status: :unprocessable_entity
     end
   end
 
   # PATCH/PUT /books/1
+  # PATCH/PUT /books/1.json
   def update
     if @book.update(book_params)
       render json: @book
@@ -34,18 +40,20 @@ class BooksController < ApplicationController
   end
 
   # DELETE /books/1
+  # DELETE /books/1.json
   def destroy
     @book.destroy
+
+    head :no_content
   end
 
-  private
-    # Use callbacks to share common setup or constraints between actions.
-    def set_book
-      @book = Book.find(params[:id])
-    end
+  def set_book
+    @book = current_user.books.find(params[:id])
+  end
 
-    # Only allow a trusted parameter "white list" through.
-    def book_params
-      params.require(:book).permit(:title, :author)
-    end
+  def book_params
+    params.require(:book).permit(:title, :author)
+  end
+
+  private :set_book, :book_params
 end
